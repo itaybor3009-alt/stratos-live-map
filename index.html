@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stratos Ventures — Israeli DefenseTech Landscape</title>
+<style>
+  :root{
+    --bg0:#070b1f; --ink:#e8edff; --muted:#9aa6cc;
+    --card:rgba(18,27,64,.55); --card-bd:rgba(123,140,220,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg0);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;}
+  body{
+    background:
+      radial-gradient(1100px 620px at 18% -8%, rgba(124,92,245,.30), transparent 60%),
+      radial-gradient(1200px 700px at 88% -4%, rgba(59,107,245,.28), transparent 60%),
+      radial-gradient(900px 900px at 50% 120%, rgba(124,92,245,.14), transparent 60%),
+      linear-gradient(180deg,#0a1030 0%, #070b1f 55%, #060914 100%);
+    background-attachment:fixed; min-height:100vh; padding:30px 26px 60px;
+  }
+  .wrap{max-width:1500px;margin:0 auto}
+  header{display:flex;align-items:center;gap:22px;margin:6px 4px 30px;flex-wrap:wrap}
+  .logo{width:64px;height:64px;border-radius:15px;flex:none;box-shadow:0 8px 28px rgba(0,0,0,.45);background:#fff}
+  .htext{display:flex;flex-direction:column;gap:5px}
+  .eyebrow{font-size:12.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  h1{font-size:clamp(26px,3.4vw,42px);line-height:1.02;font-weight:800;letter-spacing:-.02em;
+     background:linear-gradient(92deg,#ffffff 0%, #cdd7ff 40%, #a98bff 100%);
+     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  h1 .accent{background:linear-gradient(92deg,#8b6bff,#4d7bff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .sub{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:4px;color:var(--muted);font-size:13.5px}
+  .pill{padding:4px 11px;border-radius:999px;background:rgba(124,92,245,.16);
+        border:1px solid rgba(124,92,245,.35);color:#cdbcff;font-weight:600;font-size:12.5px}
+  .spacer{flex:1}
+  .grid{column-gap:20px;column-width:330px}
+  .cat{break-inside:avoid;display:inline-block;width:100%;margin:0 0 20px;
+       background:var(--card);border:1px solid var(--card-bd);border-radius:18px;
+       padding:15px 15px 17px;backdrop-filter:blur(7px);box-shadow:0 12px 34px rgba(4,8,24,.4);}
+  .cat-head{display:flex;align-items:center;gap:9px;margin:2px 2px 14px}
+  .chip{font-size:13px;font-weight:700;color:#fff;padding:7px 13px;border-radius:11px;line-height:1.15;
+        box-shadow:0 5px 16px rgba(0,0,0,.32);}
+  .cat-count{font-size:12px;color:var(--muted);font-weight:600;margin-left:auto;flex:none}
+  .logos{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:9px}
+  .logo-card{position:relative;aspect-ratio:1/1;background:#fff;border-radius:12px;
+       display:flex;align-items:center;justify-content:center;padding:9px;cursor:pointer;
+       border:1px solid rgba(255,255,255,.06);transition:transform .14s ease, box-shadow .14s ease;}
+  .logo-card:hover{transform:translateY(-4px) scale(1.045);
+       box-shadow:0 12px 26px rgba(0,0,0,.5), 0 0 0 2px rgba(124,92,245,.55);z-index:5}
+  .logo-card img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+  .dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;opacity:0}
+  .logo-card.prospect .dot{background:#f5b73b;opacity:.9}
+  .logo-card.inactive .dot{background:#8a93ad;opacity:.9}
+  .tip{position:fixed;z-index:99;pointer-events:none;opacity:0;transform:translateY(4px);
+       transition:opacity .12s ease, transform .12s ease;background:rgba(10,15,38,.97);
+       border:1px solid rgba(124,92,245,.45);color:#fff;padding:8px 12px;border-radius:10px;
+       font-size:13px;font-weight:600;box-shadow:0 14px 38px rgba(0,0,0,.55);max-width:260px;}
+  .tip .td{font-size:11.5px;color:#9fb0e0;font-weight:500;margin-top:2px}
+  .tip.show{opacity:1;transform:translateY(0)}
+  footer{margin:34px 6px 0;color:var(--muted);font-size:12.5px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+  .legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .lg{display:flex;gap:6px;align-items:center}
+  .lg i{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .state{margin:60px auto;max-width:560px;text-align:center;color:var(--muted);line-height:1.6}
+  .state h2{color:var(--ink);font-size:19px;margin-bottom:10px}
+  .state code{background:rgba(124,92,245,.16);padding:2px 7px;border-radius:6px;color:#cdbcff;font-size:13px}
+  .spin{width:34px;height:34px;border-radius:50%;border:3px solid rgba(124,92,245,.25);
+        border-top-color:#8b6bff;animation:s 1s linear infinite;margin:0 auto 16px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" id="brand" alt="Stratos Ventures">
+    <div class="htext">
+      <div class="eyebrow">Stratos Ventures</div>
+      <h1>Israeli DefenseTech <span class="accent">Landscape</span></h1>
+      <div class="sub">
+        <span class="pill">2026 Edition</span>
+        <span id="subcount">Loading live data…</span>
+      </div>
+    </div>
+  </header>
+  <div id="status" class="state"><div class="spin"></div>Pulling the latest companies from Airtable…</div>
+  <div class="grid" id="grid"></div>
+  <footer style="display:none" id="foot">
+    <div class="legend">
+      <span class="lg"><i style="background:#22c55e"></i> Active</span>
+      <span class="lg"><i style="background:#f5b73b"></i> Prospect</span>
+      <span class="lg"><i style="background:#8a93ad"></i> Inactive</span>
+    </div>
+    <div class="spacer"></div>
+    <div>Live from Airtable · hover for the name · click to visit · mapped by Stratos Ventures</div>
+  </footer>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+// Stratos brand mark (embedded so the header always renders)
+document.getElementById('brand').src = "data:image/webp;base64,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";
+
+const ORDER = [
+  "Autonomy, Robotics & Drones","Sensing, Vision & C4I 22","Wireless & Electronic Warfare",
+  "Directed Energy","Satellites & Space","Maritime","Cyber","Data Analysis & Intelligence",
+  "Quantum","War-Fighter Gear & Solutions","Israeli Primes","Traditional & Established Israeli Defense",
+  "Foreign Primes & Corporates","Israeli Investors","Foreign Investors",
+  "Programs, Accelerators & Ecosystem Support","Government & Military","infrastructure"
+];
+const DISPLAY = {
+  "Sensing, Vision & C4I 22":"Sensing, Vision & C4I",
+  "Programs, Accelerators & Ecosystem Support":"Programs, Accelerators & Ecosystem",
+  "Traditional & Established Israeli Defense":"Traditional Israeli Defense"
+};
+const COLORS = {
+  "Autonomy, Robotics & Drones":["#5b8cff","#3358e0"],"Sensing, Vision & C4I 22":["#36c6e0","#2c7fd6"],
+  "Wireless & Electronic Warfare":["#ff6b8a","#d63b6b"],"Directed Energy":["#b06bff","#7c3aed"],
+  "Satellites & Space":["#f0b54a","#e0852c"],"Maritime":["#3fd3c0","#1f9bb5"],
+  "Cyber":["#34d399","#10a37f"],"Data Analysis & Intelligence":["#ffa14a","#ef6c2c"],
+  "Quantum":["#9aa6c4","#5f6b8c"],"War-Fighter Gear & Solutions":["#7ed957","#3f9e3a"],
+  "Israeli Primes":["#6ee0a0","#2bb673"],"Traditional & Established Israeli Defense":["#5fd0c8","#2c9aa0"],
+  "Foreign Primes & Corporates":["#f0c34a","#d69a2c"],"Israeli Investors":["#6b9bff","#3358e0"],
+  "Foreign Investors":["#4bc5e8","#2c84d6"],"Programs, Accelerators & Ecosystem Support":["#ffb14a","#ef8c2c"],
+  "Government & Military":["#ff7a7a","#d63b3b"],"infrastructure":["#f06bb0","#c93b8a"]
+};
+const statusClass = s => { if(!s) return ''; s=s.toLowerCase(); return s==='prospect'?'prospect':s==='inactive'?'inactive':''; };
+const tip = document.getElementById('tip');
+
+function render(companies){
+  const groups={};
+  companies.forEach(c=>{ const k=c.category||"Other"; (groups[k]=groups[k]||[]).push(c); });
+  Object.values(groups).forEach(g=>g.sort((a,b)=>a.name.toLowerCase().localeCompare(b.name.toLowerCase())));
+  const ordered=[...ORDER.filter(c=>groups[c]),...Object.keys(groups).filter(c=>!ORDER.includes(c))];
+  const grid=document.getElementById('grid');
+  ordered.forEach(cat=>{
+    const items=groups[cat]; const col=COLORS[cat]||["#6b9bff","#3358e0"];
+    const box=document.createElement('div'); box.className='cat';
+    const head=document.createElement('div'); head.className='cat-head';
+    const chip=document.createElement('span'); chip.className='chip';
+    chip.style.background='linear-gradient(135deg,'+col[0]+','+col[1]+')';
+    chip.textContent=DISPLAY[cat]||cat;
+    const cnt=document.createElement('span'); cnt.className='cat-count'; cnt.textContent=items.length;
+    head.appendChild(chip); head.appendChild(cnt); box.appendChild(head);
+    const logos=document.createElement('div'); logos.className='logos';
+    items.forEach(it=>{
+      const card=document.createElement('div'); card.className='logo-card '+statusClass(it.status);
+      if(it.logo){ const img=document.createElement('img'); img.src=it.logo; img.alt=it.name; img.loading='lazy'; card.appendChild(img); }
+      else { card.textContent=it.name.slice(0,3); card.style.color='#333'; card.style.fontWeight='700'; }
+      const dot=document.createElement('span'); dot.className='dot'; card.appendChild(dot);
+      if(it.website) card.addEventListener('click',()=>window.open(it.website,'_blank','noopener'));
+      card.addEventListener('mousemove',e=>{
+        const dom=it.website?it.website.replace(/^https?:\/\//,'').replace(/\/$/,''):'';
+        tip.innerHTML='<div>'+it.name+'</div>'+(dom?'<div class="td">'+dom+'</div>':'');
+        tip.classList.add('show');
+        let x=e.clientX+14,y=e.clientY+14;
+        if(x+tip.offsetWidth>innerWidth-10)x=e.clientX-tip.offsetWidth-14;
+        if(y+tip.offsetHeight>innerHeight-10)y=e.clientY-tip.offsetHeight-14;
+        tip.style.left=x+'px'; tip.style.top=y+'px';
+      });
+      card.addEventListener('mouseleave',()=>tip.classList.remove('show'));
+      logos.appendChild(card);
+    });
+    box.appendChild(logos); grid.appendChild(box);
+  });
+  document.getElementById('subcount').textContent=companies.length+" companies & organizations · "+ordered.length+" sectors";
+  document.getElementById('status').style.display='none';
+  document.getElementById('foot').style.display='flex';
+}
+
+function showError(msg){
+  document.getElementById('status').innerHTML =
+    '<h2>Couldn’t load the live data</h2><p>'+msg+'</p>'+
+    '<p style="margin-top:12px">Make sure the <code>AIRTABLE_TOKEN</code> environment variable is set in your Vercel project settings, then redeploy. See the README for step-by-step instructions.</p>';
+}
+
+(async()=>{
+  try{
+    const r=await fetch('/api/companies',{cache:'no-store'});
+    const data=await r.json();
+    if(!r.ok || data.error){ showError((data && (data.message||data.error)) || ('HTTP '+r.status)); return; }
+    if(!data.companies || !data.companies.length){ showError('Airtable returned no records.'); return; }
+    render(data.companies);
+  }catch(e){ showError(String(e)); }
+})();
+</script>
+</body>
+</html>
