@@ -874,10 +874,13 @@ body.admin-active .row-rsz:active::after{
 /* ── density + no-blank overrides (auto-added) ───────────────── */
 .chips{display:grid !important; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)) !important; gap:6px !important; justify-content:stretch !important; align-content:start !important}
 .chips .chip{width:100% !important; min-height:46px !important; padding:7px 5px !important}
-.chip .lw{width:100% !important; height:32px !important}
+.chip{align-items:center !important}
+.chip .lw{width:100% !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;margin:0 auto !important}
+.chip .li{margin:0 auto !important;display:block}
 .chip .li{max-width:100% !important; max-height:30px !important}
 .lwtext{font-size:9.5px;font-weight:700;color:#0b1530;text-align:center;line-height:1.06;max-height:30px;overflow:hidden;padding:0 2px;word-break:break-word;display:flex;align-items:center;justify-content:center}
-.sg-row{align-items:flex-start !important}
+.sg-row{align-items:stretch !important}
+.row{align-items:stretch !important}
 .sg-body{padding:6px 7px 8px !important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2833,10 +2836,9 @@ window.addEventListener('storage', e=>{
   if(_SYNC_KEYS.has(e.key)) _fullRender();
 });
 
-/* ── Airtable live data: logos + auto-add every company ──────────
-   Pulls /api/companies, fills each chip's blank logo box (matched by
-   website domain or name), and AUTO-ADDS a box for every Airtable
-   company that has a logo but isn't already in the baked map. */
+/* ── Airtable-driven map: build every section from /api/companies ──
+   The company list, logos and placement all come from Airtable, so
+   every company shows its real logo and the map mirrors the database. */
 window.AT_LOGOS = window.AT_LOGOS || null;
 function _atDom(u){ return (u||'').toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].trim(); }
 function _atName(n){ return (n||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
@@ -2858,19 +2860,13 @@ const _AT_CAT2KEY = {
   "israeli primes":"primes-il","foreign primes & corporates":"primes-fo",
   "programs, accelerators & ecosystem support":"accel","government & military":"gov"
 };
-let _AT_EXTRA = [];
-function _injectAirtableCompanies(){
-  if(!_AT_EXTRA.length) return;
-  const SEC_MAP={'inv-il':{id:'invIL',cls:'ci'},'inv-fo':{id:'invFO',cls:'cif'},'midtier':{id:'midtier',cls:'cmt'},'primes-il':{id:'primesIL',cls:'cp'},'primes-fo':{id:'primesFO',cls:'cf'},'accel':{id:'accel',cls:'ca'},'gov':{id:'gov',cls:'cg'}};
-  const sectorCls=Object.fromEntries(SECTORS.map(s=>[s.key,s.cls||'cs']));
-  _AT_EXTRA.forEach(co=>{
-    if(typeof DELETED!=='undefined' && DELETED.has(co.d)) return;
-    let chipsDiv,cls;
-    if(SEC_MAP[co.sectionKey]){ const el=document.getElementById(SEC_MAP[co.sectionKey].id); chipsDiv=el&&el.querySelector('.chips'); cls=SEC_MAP[co.sectionKey].cls; }
-    else { const cell=document.querySelector('.sg-cell[data-key="'+co.sectionKey+'"]'); chipsDiv=cell&&cell.querySelector('.chips'); cls=sectorCls[co.sectionKey]||'cs'; }
-    if(!chipsDiv) return;
-    if(chipsDiv.querySelector('[data-domain="'+co.d+'"]')) return;
-    chipsDiv.insertAdjacentHTML('beforeend', chipHTML(co,cls));
+/* Balance every flex row so box widths track company counts → even heights, no gaps */
+function _balanceRows(){
+  document.querySelectorAll('#startupGrid .sg-row, .row').forEach(row=>{
+    const cells=[...row.children].filter(el=>el.classList && (el.classList.contains('sg-cell')||el.classList.contains('card')));
+    if(cells.length<2) return;
+    const counts=cells.map(c=>Math.max(1, c.querySelectorAll('.chip').length));
+    cells.forEach((c,idx)=>{ c.style.flex=counts[idx]+' 1 0%'; c.style.minWidth='0'; });
   });
 }
 (async function loadAirtableData(){
@@ -2878,29 +2874,28 @@ function _injectAirtableCompanies(){
     const r = await fetch('/api/companies', {cache:'no-store'});
     if(!r.ok) return;
     const data = await r.json();
+    const comps = data.companies||[];
     const dom={}, name={};
-    (data.companies||[]).forEach(c=>{
-      if(!c.logo) return;
-      const d=_atDom(c.website); if(d && !dom[d]) dom[d]=c.logo;
-      const n=_atName(c.name);   if(n && !name[n]) name[n]=c.logo;
-    });
-    window.AT_LOGOS = {dom,name};
-    let baked=new Set();
-    try{ getAllCos().forEach(co=>{ if(co.d)baked.add('d:'+_atDom(co.d)); if(co.n)baked.add('n:'+_atName(co.n)); }); }catch(e){}
-    _AT_EXTRA=[];
-    (data.companies||[]).forEach(c=>{
-      const d=_atDom(c.website), n=_atName(c.name);
-      if((d&&baked.has('d:'+d))||(n&&baked.has('n:'+n))) return;
+    comps.forEach(c=>{ if(!c.logo) return; const d=_atDom(c.website); if(d&&!dom[d])dom[d]=c.logo; const n=_atName(c.name); if(n&&!name[n])name[n]=c.logo; });
+    window.AT_LOGOS={dom,name};
+    // group Airtable companies by section key
+    const groups={};
+    comps.forEach(c=>{
       const key=_AT_CAT2KEY[(c.category||'').toLowerCase().trim()];
       if(!key) return;
-      _AT_EXTRA.push({n:c.name, d:(d||('x-'+n)), sectionKey:key});
+      const d=_atDom(c.website), n=_atName(c.name);
+      (groups[key]=groups[key]||[]).push({n:c.name, d:(d||('x-'+n))});
     });
-    try{ if(!window.LOGOS) window.LOGOS={};
-      getAllCos().forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; });
-      _AT_EXTRA.forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; });
-    }catch(e){}
+    Object.values(groups).forEach(a=>a.sort((x,y)=>x.n.toLowerCase().localeCompare(y.n.toLowerCase())));
+    // replace baked section data with Airtable data
+    try{ SECTORS.forEach(s=>{ s.co = groups[s.key]||[]; }); }catch(e){}
+    const setArr=(arr,key)=>{ try{ arr.length=0; (groups[key]||[]).forEach(x=>arr.push(x)); }catch(e){} };
+    setArr(INV_IL,'inv-il'); setArr(INV_FO,'inv-fo'); setArr(MIDTIER,'midtier');
+    setArr(PRIMES_IL,'primes-il'); setArr(PRIMES_FO,'primes-fo'); setArr(ACCEL,'accel'); setArr(GOV,'gov');
+    // feed logos to intel/admin views
+    try{ if(!window.LOGOS) window.LOGOS={}; getAllCos().forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; }); }catch(e){}
     if(typeof _fullRender==='function') _fullRender();
-    _injectAirtableCompanies();
+    _balanceRows();
     if(typeof renderStratos==='function'){ try{ renderStratos(); }catch(e){} }
   }catch(e){ console.warn('Airtable load failed', e); }
 })();
