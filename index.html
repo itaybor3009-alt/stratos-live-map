@@ -1589,7 +1589,6 @@ const _ALL_SECS=[
   {key:'sensing',label:'Sensing, Vision & C4I'},
   {key:'wireless',label:'Wireless & Electronic Warfare'},
   {key:'cyber',label:'Cyber'},
-  {key:'stealth',label:'Stealth & Signature Mgmt'},
   {key:'maritime',label:'Maritime'},
   {key:'energy',label:'Directed Energy'},
   {key:'quantum',label:'Quantum'},
@@ -2535,14 +2534,6 @@ const SECTORS = [
     ]
   },
   {
-    key:'stealth',icon:'👁',cls:'cst',color:'#44403c',
-    label:'Stealth &amp; Signature Mgmt',
-    desc:'Growing sector — some companies intentionally omitted',
-    co:[
-      {n:'Fibrotex',d:'fibrotex-tech.com'},{n:'Eltics',d:'eltics.com'}
-    ]
-  },
-  {
     key:'maritime',icon:'⚓',cls:'cm',color:'#0369a1',
     label:'Maritime',
     desc:'Naval · port security · AIS · USVs · underwater systems',
@@ -2684,7 +2675,7 @@ function ssHeader(sec){
 const ROWS = [
   ['autonomy',   'sensing',  'cyber'],               // Row 1
   ['warfighter', 'space',    'data',    'wireless'],  // Row 2
-  ['maritime',   'energy',   'quantum', 'stealth'],   // Row 3
+  ['maritime',   'energy',   'quantum'],   // Row 3
 ];
 
 function buildStartups(){
@@ -2833,9 +2824,10 @@ window.addEventListener('storage', e=>{
   if(_SYNC_KEYS.has(e.key)) _fullRender();
 });
 
-/* ── Airtable live logos ──────────────────────────────────────────
-   Pulls logos from the Airtable backend (/api/companies) and fills
-   each chip's blank logo box, matched by website domain or by name. */
+/* ── Airtable live data: logos + auto-add every company ──────────
+   Pulls /api/companies, fills each chip's blank logo box (matched by
+   website domain or name), and AUTO-ADDS a box for every Airtable
+   company that has a logo but isn't already in the baked map. */
 window.AT_LOGOS = window.AT_LOGOS || null;
 function _atDom(u){ return (u||'').toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0].trim(); }
 function _atName(n){ return (n||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
@@ -2847,7 +2839,32 @@ function atLogo(co){
   if(n && window.AT_LOGOS.name[n]) return window.AT_LOGOS.name[n];
   return null;
 }
-(async function loadAirtableLogos(){
+const _AT_CAT2KEY = {
+  "autonomy, robotics & drones":"autonomy","war-fighter gear & solutions":"warfighter",
+  "satellites & space":"space","data analysis & intelligence":"data",
+  "sensing, vision & c4i 22":"sensing","sensing, vision & c4i":"sensing",
+  "wireless & electronic warfare":"wireless","cyber":"cyber","maritime":"maritime",
+  "directed energy":"energy","quantum":"quantum","israeli investors":"inv-il",
+  "foreign investors":"inv-fo","traditional & established israeli defense":"midtier",
+  "israeli primes":"primes-il","foreign primes & corporates":"primes-fo",
+  "programs, accelerators & ecosystem support":"accel","government & military":"gov"
+};
+let _AT_EXTRA = [];
+function _injectAirtableCompanies(){
+  if(!_AT_EXTRA.length) return;
+  const SEC_MAP={'inv-il':{id:'invIL',cls:'ci'},'inv-fo':{id:'invFO',cls:'cif'},'midtier':{id:'midtier',cls:'cmt'},'primes-il':{id:'primesIL',cls:'cp'},'primes-fo':{id:'primesFO',cls:'cf'},'accel':{id:'accel',cls:'ca'},'gov':{id:'gov',cls:'cg'}};
+  const sectorCls=Object.fromEntries(SECTORS.map(s=>[s.key,s.cls||'cs']));
+  _AT_EXTRA.forEach(co=>{
+    if(typeof DELETED!=='undefined' && DELETED.has(co.d)) return;
+    let chipsDiv,cls;
+    if(SEC_MAP[co.sectionKey]){ const el=document.getElementById(SEC_MAP[co.sectionKey].id); chipsDiv=el&&el.querySelector('.chips'); cls=SEC_MAP[co.sectionKey].cls; }
+    else { const cell=document.querySelector('.sg-cell[data-key="'+co.sectionKey+'"]'); chipsDiv=cell&&cell.querySelector('.chips'); cls=sectorCls[co.sectionKey]||'cs'; }
+    if(!chipsDiv) return;
+    if(chipsDiv.querySelector('[data-domain="'+co.d+'"]')) return;
+    chipsDiv.insertAdjacentHTML('beforeend', chipHTML(co,cls));
+  });
+}
+(async function loadAirtableData(){
   try{
     const r = await fetch('/api/companies', {cache:'no-store'});
     if(!r.ok) return;
@@ -2859,10 +2876,25 @@ function atLogo(co){
       const n=_atName(c.name);   if(n && !name[n]) name[n]=c.logo;
     });
     window.AT_LOGOS = {dom,name};
-    try{ if(!window.LOGOS) window.LOGOS={}; getAllCos().forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; }); }catch(e){}
+    let baked=new Set();
+    try{ getAllCos().forEach(co=>{ if(co.d)baked.add('d:'+_atDom(co.d)); if(co.n)baked.add('n:'+_atName(co.n)); }); }catch(e){}
+    _AT_EXTRA=[];
+    (data.companies||[]).forEach(c=>{
+      if(!c.logo) return;
+      const d=_atDom(c.website), n=_atName(c.name);
+      if((d&&baked.has('d:'+d))||(n&&baked.has('n:'+n))) return;
+      const key=_AT_CAT2KEY[(c.category||'').toLowerCase().trim()];
+      if(!key) return;
+      _AT_EXTRA.push({n:c.name, d:(d||('x-'+n)), sectionKey:key});
+    });
+    try{ if(!window.LOGOS) window.LOGOS={};
+      getAllCos().forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; });
+      _AT_EXTRA.forEach(co=>{ const u=atLogo(co); if(u) window.LOGOS[co.d]=u; });
+    }catch(e){}
     if(typeof _fullRender==='function') _fullRender();
+    _injectAirtableCompanies();
     if(typeof renderStratos==='function'){ try{ renderStratos(); }catch(e){} }
-  }catch(e){ console.warn('Airtable logo load failed', e); }
+  }catch(e){ console.warn('Airtable load failed', e); }
 })();
 </script>
 
