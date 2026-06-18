@@ -870,6 +870,15 @@ body.admin-active .row-rsz:active::after{
 
 /* Resize handles */
 
+
+/* ── density + no-blank overrides (auto-added) ───────────────── */
+.chips{display:grid !important; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)) !important; gap:6px !important; justify-content:stretch !important; align-content:start !important}
+.chips .chip{width:100% !important; min-height:46px !important; padding:7px 5px !important}
+.chip .lw{width:100% !important; height:32px !important}
+.chip .li{max-width:100% !important; max-height:30px !important}
+.lwtext{font-size:9.5px;font-weight:700;color:#0b1530;text-align:center;line-height:1.06;max-height:30px;overflow:hidden;padding:0 2px;word-break:break-word;display:flex;align-items:center;justify-content:center}
+.sg-row{align-items:flex-start !important}
+.sg-body{padding:6px 7px 8px !important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -2635,7 +2644,7 @@ function chipHTML(co, cls){
   const ok   = window.LOGOS && co.d && window.LOGOS[co.d] && !SKIP.has(co.d);
   const dark = DARK_CHIP.has(co.d);
   const _aturl = (typeof atLogo==='function') ? atLogo(co) : null;
-  const logo = _aturl ? `<div class="lw"><img class="li" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"></div>`;  /* blank white logo box — ready for Airtable logos */
+  const logo = _aturl ? `<div class="lw"><img class="li" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"><span class="lwtext">${(co.n||'').replace(/</g,'&lt;')}</span></div>`;  /* blank white logo box — ready for Airtable logos */
   const attrs = co.d ? ` data-domain="${co.d}" data-name="${co.n.replace(/"/g,'&quot;')}"` : '';
   return `<div class="chip ${cls}${dark?' chip-dark':''}" title="${co.n}"${attrs}>${logo}</div>`;
 }
@@ -2880,7 +2889,6 @@ function _injectAirtableCompanies(){
     try{ getAllCos().forEach(co=>{ if(co.d)baked.add('d:'+_atDom(co.d)); if(co.n)baked.add('n:'+_atName(co.n)); }); }catch(e){}
     _AT_EXTRA=[];
     (data.companies||[]).forEach(c=>{
-      if(!c.logo) return;
       const d=_atDom(c.website), n=_atName(c.name);
       if((d&&baked.has('d:'+d))||(n&&baked.has('n:'+n))) return;
       const key=_AT_CAT2KEY[(c.category||'').toLowerCase().trim()];
