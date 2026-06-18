@@ -872,15 +872,15 @@ body.admin-active .row-rsz:active::after{
 
 
 /* ── density + no-blank overrides (auto-added) ───────────────── */
-.chips{display:grid !important; grid-template-columns:repeat(auto-fill,minmax(82px,1fr)) !important; gap:6px !important; justify-items:stretch !important; align-content:start !important}
-.chips .chip{width:100% !important; min-height:46px !important; padding:7px 5px !important}
+.chips{display:flex !important; flex-wrap:wrap !important; justify-content:center !important; align-content:center !important; align-items:center !important; gap:6px !important}
+.chips .chip{flex:0 0 90px !important; width:90px !important; min-height:48px !important; padding:7px 6px !important; justify-content:center !important}
 .chip{align-items:center !important}
 .chip .lw{width:100% !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;margin:0 auto !important}
 .chip .li{margin:0 auto !important;display:block}
 .chip .li{max-width:100% !important; max-height:30px !important}
 .lwtext{font-size:9.5px;font-weight:700;color:#0b1530;text-align:center;line-height:1.06;max-height:30px;overflow:hidden;padding:0 2px;word-break:break-word;display:flex;align-items:center;justify-content:center}
-.sg-row{align-items:flex-start !important}
-.row{align-items:flex-start !important}
+.sg-row{align-items:stretch !important; gap:5px !important}
+.row{align-items:stretch !important; gap:5px !important}
 .sg-body{padding:6px 7px 8px !important}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -2651,9 +2651,9 @@ function chipHTML(co, cls){
 }
 function chips(arr,cls){return`<div class="chips">${fd(arr).map(c=>chipHTML(c,cls)).join('')}</div>`}
 
-function band(icon,title,desc,cls){
+function band(icon,title,desc,cls,count){
   return`<div class="band ${cls}">
-    <div class="band-row"><span class="band-title">${title}</span></div>
+    <div class="band-row"><span class="band-title">${title}</span>${(count!=null)?`<span style="margin-left:auto;background:rgba(255,255,255,.13);color:rgba(255,255,255,.72);font-size:8px;font-weight:700;padding:2px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.18);flex-shrink:0">${count}</span>`:''}</div>
   </div>`
 }
 
@@ -2721,7 +2721,7 @@ function buildStartups(){
 /* ── BUILD LOWER SECTIONS ───────────────────────────────── */
 function build(id, icon, title, desc, bandCls, arr, cls){
   document.getElementById(id).innerHTML =
-    band(icon,title,desc,bandCls) + `<div class="cbody">${chips(arr,cls)}</div>`;
+    band(icon,title,desc,bandCls,fd(arr).length) + `<div class="cbody">${chips(arr,cls)}</div>`;
 }
 
 /* ── Inject ADDED_RT companies into the visual map ──────────── */
@@ -2858,7 +2858,8 @@ function _balanceRows(){
   document.querySelectorAll('#startupGrid .sg-row, .row').forEach(row=>{
     const cells=[...row.children].filter(el=>el.classList && (el.classList.contains('sg-cell')||el.classList.contains('card')));
     if(cells.length<2) return;
-    cells.forEach(c=>{ c.style.flex='1 1 0%'; c.style.minWidth='0'; });
+    const counts=cells.map(c=>Math.max(1, c.querySelectorAll('.chip').length));
+    cells.forEach((c,i)=>{ c.style.flex=counts[i]+' 1 0%'; c.style.minWidth='0'; });
   });
 }
 (async function loadAirtableData(){
