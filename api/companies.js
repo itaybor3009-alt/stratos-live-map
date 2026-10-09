@@ -14,6 +14,8 @@ const F = {
   industry:"fldPLMiWokOga6Y2s", // Industry (Select)
   blurb:   "fldpfF3HOngS774J5", // Blurb
   status:  "fldT7q137Aztsrlhy", // Company Status
+  ownership:"fld1ynPEB4CSqanDm", // Ownership (Private / Public / Acquired / N/A)
+  stealth: "fldHAPXvqx83KHwe5", // Stealth (checkbox)
 };
 
 module.exports = async (req, res) => {
@@ -54,12 +56,15 @@ module.exports = async (req, res) => {
         : null;
       const ind = f[F.industry];
       const st  = f[F.status];
+      const ow  = f[F.ownership];
       return {
         name:     f[F.name] || "",
         website:  f[F.website] || "",
         category: ind ? (typeof ind === "object" ? ind.name : ind) : null,
         status:   st  ? (typeof st  === "object" ? st.name  : st ) : null,
         blurb:    f[F.blurb] || "",
+        ownership: ow ? (typeof ow === "object" ? ow.name : ow) : null,
+        stealth:  !!f[F.stealth],
         logo,
       };
     }).filter((c) => c.name);
