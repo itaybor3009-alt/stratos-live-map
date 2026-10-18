@@ -67,7 +67,10 @@ module.exports = async (req, res) => {
         stealth:  !!f[F.stealth],
         logo,
       };
-    }).filter((c) => c.name);
+    })
+      .filter((c) => c.name)
+      // Stealth companies stay in Airtable but are never sent to the public map
+      .filter((c) => !c.stealth && (c.status || "").toLowerCase() !== "stealth");
 
     // Browsers cache for 5 min; CDN serves stale-while-revalidate so loads stay fast
     res.setHeader("Cache-Control", "public, max-age=300, s-maxage=300, stale-while-revalidate=600");
