@@ -885,6 +885,9 @@ body.admin-active .row-rsz:active::after{
 .chip .lw{width:100% !important;height:32px !important;display:flex !important;align-items:center !important;justify-content:center !important;margin:0 auto !important}
 .chip .li{margin:0 auto !important;display:block}
 .chip .li{max-width:100% !important; max-height:30px !important}
+.chip .lw{height:34px !important}
+.chip .li{max-height:34px !important}
+.chip.chip-inv{background:#0b1530 !important;border-color:#0b1530 !important}
 .lwtext{font-size:9.5px;font-weight:700;color:#0b1530;text-align:center;line-height:1.06;max-height:30px;overflow:hidden;padding:0 2px;word-break:break-word;display:flex;align-items:center;justify-content:center}
 .sg-row{align-items:stretch !important; gap:5px !important}
 .row{align-items:stretch !important; gap:5px !important}
@@ -2671,7 +2674,7 @@ function chipHTML(co, cls){
   const ok   = window.LOGOS && co.d && window.LOGOS[co.d] && !SKIP.has(co.d);
   const dark = DARK_CHIP.has(co.d);
   const _aturl = (typeof atLogo==='function') ? atLogo(co) : null;
-  const logo = _aturl ? `<div class="lw"><img class="li" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"><span class="lwtext">${(co.n||'').replace(/</g,'&lt;')}</span></div>`;  /* blank white logo box — ready for Airtable logos */
+  const logo = _aturl ? `<div class="lw"><img class="li" crossorigin="anonymous" onload="_trimLogo(this)" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"><span class="lwtext">${(co.n||'').replace(/</g,'&lt;')}</span></div>`;  /* blank white logo box — ready for Airtable logos */
   const attrs = co.d ? ` data-domain="${co.d}" data-name="${co.n.replace(/"/g,'&quot;')}"` : '';
   const stealth = (window.AT_STEALTH && co.d && window.AT_STEALTH.has(co.d)) ? '<span class="stealth-tag">STEALTH</span>' : '';
   return `<div class="chip ${cls}${dark?' chip-dark':''}" title="${co.n}${stealth?' (stealth)':''}"${attrs}>${logo}${stealth}</div>`;
@@ -2720,6 +2723,39 @@ const NEO_IL = [];
 const NEO_FO = [];
 window.AT_STEALTH = window.AT_STEALTH || new Set();
 window.AT_WEB = window.AT_WEB || {};
+/* Auto-fit logos: crop empty margins (transparent or white) so every logo fills its box,
+   and put mostly-white logos on a dark chip so they stay visible. Runs once per image. */
+function _trimLogo(im){
+  if(im.dataset.fit) return; im.dataset.fit='1';
+  try{
+    const W=im.naturalWidth,H=im.naturalHeight; if(!W||!H) return;
+    const sc=Math.min(1,600/Math.max(W,H)), w=Math.max(1,Math.round(W*sc)), h=Math.max(1,Math.round(H*sc));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    const cx=cv.getContext('2d'); cx.drawImage(im,0,0,w,h);
+    const D=cx.getImageData(0,0,w,h).data;
+    const corner=k=>[D[k],D[k+1],D[k+2],D[k+3]];
+    const c=corner(0), transparentBg=c[3]<20, whiteBg=!transparentBg && c[0]>235&&c[1]>235&&c[2]>235;
+    if(!transparentBg && !whiteBg) return;           // logo sits on its own coloured tile: leave as is
+    let x0=w,y0=h,x1=-1,y1=-1,n=0,white=0;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const k=(y*w+x)*4, a=D[k+3];
+      const ink = transparentBg ? a>30 : (a>30 && (D[k]<225||D[k+1]<225||D[k+2]<225));
+      if(!ink) continue;
+      n++; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      if(D[k]>215&&D[k+1]>215&&D[k+2]>215) white++;
+    }
+    if(!n) return;
+    const chip=im.closest('.chip');
+    if(transparentBg && white/n>0.8 && chip) chip.classList.add('chip-inv');
+    const bw=x1-x0+1, bh=y1-y0+1;
+    if(bw*bh > 0.9*w*h) return;                      // already tight
+    const pad=Math.round(Math.max(bw,bh)*0.04);
+    const X=Math.max(0,x0-pad),Y=Math.max(0,y0-pad),X2=Math.min(w,x1+1+pad),Y2=Math.min(h,y1+1+pad);
+    const out=document.createElement('canvas'); out.width=X2-X; out.height=Y2-Y;
+    out.getContext('2d').drawImage(cv,X,Y,X2-X,Y2-Y,0,0,X2-X,Y2-Y);
+    im.src=out.toDataURL('image/png');
+  }catch(e){ /* cross-origin or decode issue: keep the original */ }
+}
 /* Public view: clicking a company logo opens its website (from Airtable) in a new tab */
 document.addEventListener('click', function(e){
   if(typeof _isAdminSession!=='undefined' && _isAdminSession) return;
