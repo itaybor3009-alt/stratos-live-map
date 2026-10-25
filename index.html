@@ -2746,8 +2746,10 @@ function _trimLogo(im){
     }
     if(!n) return;
     const chip=im.closest('.chip');
-    if(transparentBg && white/n>0.8 && chip) chip.classList.add('chip-inv');
     const bw=x1-x0+1, bh=y1-y0+1;
+    // white line-art logo (not a filled white tile) -> dark chip so it stays visible
+    if(transparentBg && white/n>0.8 && n/(bw*bh)<0.6 && chip) chip.classList.add('chip-inv');
+    if(bw<12 || bh<8) return;                         // too small to be the real logo: keep original
     if(bw*bh > 0.9*w*h) return;                      // already tight
     const pad=Math.round(Math.max(bw,bh)*0.04);
     const X=Math.max(0,x0-pad),Y=Math.max(0,y0-pad),X2=Math.min(w,x1+1+pad),Y2=Math.min(h,y1+1+pad);
