@@ -2674,7 +2674,7 @@ function chipHTML(co, cls){
   const ok   = window.LOGOS && co.d && window.LOGOS[co.d] && !SKIP.has(co.d);
   const dark = DARK_CHIP.has(co.d);
   const _aturl = (typeof atLogo==='function') ? atLogo(co) : null;
-  const logo = _aturl ? `<div class="lw"><img class="li" crossorigin="anonymous" onload="_trimLogo(this)" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"><span class="lwtext">${(co.n||'').replace(/</g,'&lt;')}</span></div>`;  /* blank white logo box — ready for Airtable logos */
+  const logo = _aturl ? `<div class="lw"><img class="li" crossorigin="anonymous" onload="_trimLogo(this)" onerror="_logoRetry(this)" src="${_aturl}" alt="${(co.n||'').replace(/"/g,'&quot;')}" loading="lazy"></div>` : `<div class="lw"><span class="lwtext">${(co.n||'').replace(/</g,'&lt;')}</span></div>`;  /* blank white logo box — ready for Airtable logos */
   const attrs = co.d ? ` data-domain="${co.d}" data-name="${co.n.replace(/"/g,'&quot;')}"` : '';
   const stealth = (window.AT_STEALTH && co.d && window.AT_STEALTH.has(co.d)) ? '<span class="stealth-tag">STEALTH</span>' : '';
   return `<div class="chip ${cls}${dark?' chip-dark':''}" title="${co.n}${stealth?' (stealth)':''}"${attrs}>${logo}${stealth}</div>`;
@@ -2725,6 +2725,10 @@ window.AT_STEALTH = window.AT_STEALTH || new Set();
 window.AT_WEB = window.AT_WEB || {};
 /* Auto-fit logos: crop empty margins (transparent or white) so every logo fills its box,
    and put mostly-white logos on a dark chip so they stay visible. Runs once per image. */
+function _logoRetry(im){ // image host without CORS: show it as-is (no auto-fit)
+  if(im.dataset.retry) return; im.dataset.retry='1'; im.dataset.fit='1';
+  im.removeAttribute('crossorigin'); const u=im.src; im.src=u+(u.includes('#')?'':'#nocors');
+}
 function _trimLogo(im){
   if(im.dataset.fit) return; im.dataset.fit='1';
   try{
