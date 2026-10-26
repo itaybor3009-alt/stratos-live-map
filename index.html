@@ -2979,7 +2979,9 @@ function _balanceRows(){
     const data = await r.json();
     const comps = data.companies||[];
     const dom={}, name={};
-    comps.forEach(c=>{ if(!c.logo) return; const d=_atDom(c.website); if(d&&!dom[d])dom[d]=c.logo; const n=_atName(c.name); if(n&&!name[n])name[n]=c.logo; });
+    // companies that share a website domain (parent company, LinkedIn page) are keyed by name so logos/links don't collide
+    const domCount={}; comps.forEach(c=>{ const d=_atDom(c.website); if(d) domCount[d]=(domCount[d]||0)+1; });
+    comps.forEach(c=>{ if(!c.logo) return; const d=_atDom(c.website); if(d&&domCount[d]===1&&!dom[d])dom[d]=c.logo; const n=_atName(c.name); if(n&&!name[n])name[n]=c.logo; });
     window.AT_LOGOS={dom,name};
     // group Airtable companies by section key
     const groups={};
@@ -2987,7 +2989,7 @@ function _balanceRows(){
       const key=_AT_CAT2KEY[(c.category||'').toLowerCase().trim()];
       if(!key) return;
       const d=_atDom(c.website), n=_atName(c.name);
-      const dd=(d||('x-'+n));
+      const dd=((d&&domCount[d]===1)?d:('x-'+n));
       if(c.stealth) window.AT_STEALTH.add(dd);
       if(c.website){ const w=/^https?:\/\//i.test(c.website)?c.website:'https://'+c.website; window.AT_WEB[dd]=w; }
       const own=(c.ownership||'').toLowerCase();
